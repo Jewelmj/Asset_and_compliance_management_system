@@ -1,12 +1,9 @@
 from flask import Blueprint, request
-from services.asset_service import AssetService
+from database.db import SessionLocal
+from database.models import AssetORM
+import uuid
 
 assets_bp = Blueprint("assets", __name__)
-
-ASSETS_DB = {}
-
-asset_service = AssetService()
-
 
 @assets_bp.post("/")
 def create_asset():
@@ -14,26 +11,32 @@ def create_asset():
     name = data.get("name")
     category = data.get("category")
 
-    asset = asset_service.create_asset(name, category)
+    asset_id = str(uuid.uuid4())
+    db = SessionLocal()
+    asset = AssetORM(id=asset_id, name=name, category=category)
 
-    ASSETS_DB[asset.asset_id] = asset
+    db.add(asset)
+    db.commit()
 
     return {
-        "asset_id": asset.asset_id,
+        "asset_id": asset.id,
         "name": asset.name,
-        "category": asset.category
+        "category": asset.category,
     }, 201
 
 
 @assets_bp.get("/")
 def list_assets():
+    db = SessionLocal()
+    assets = db.query(AssetORM).all()
+
     return {
         "assets": [
             {
-                "asset_id": a.asset_id,
+                "asset_id": a.id,
                 "name": a.name,
-                "category": a.category
+                "category": a.category,
             }
-            for a in ASSETS_DB.values()
+            for a in assets
         ]
     }

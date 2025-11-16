@@ -1,10 +1,9 @@
 from flask import Blueprint, request
-from services.place_service import PlaceService
+from database.db import SessionLocal
+from database.models import PlaceORM
+import uuid
 
 places_bp = Blueprint("places", __name__)
-
-PLACES_DB = {}
-place_service = PlaceService()
 
 @places_bp.post("/")
 def create_place():
@@ -12,27 +11,35 @@ def create_place():
     name = data.get("name")
     location = data.get("location")
 
-    place = place_service.create_place(name, location)
+    place_id = str(uuid.uuid4())
+    db = SessionLocal()
 
-    PLACES_DB[place.place_id] = place
+    place = PlaceORM(id=place_id, name=name, location=location)
+
+    db.add(place)
+    db.commit()
 
     return {
-        "place_id": place.place_id,
+        "place_id": place.id,
         "name": place.name,
-        "location": place.location
+        "location": place.location,
     }, 201
+
 
 @places_bp.get("/")
 def list_places():
+    db = SessionLocal()
+    places = db.query(PlaceORM).all()
+
     return {
         "places": [
             {
-                "place_id": p.place_id,
+                "place_id": p.id,
                 "name": p.name,
                 "location": p.location,
-                "asset_count": p.assets.count(),
-                "people_count": p.people.count()
+                "asset_count": 0,   
+                "people_count": 0,
             }
-            for p in PLACES_DB.values()
+            for p in places
         ]
     }
