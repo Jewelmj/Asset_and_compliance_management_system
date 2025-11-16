@@ -1,7 +1,9 @@
 from flask import Blueprint, request
 from database.db import SessionLocal
-from database.models import AssetORM
-import uuid
+from mappers.asset_mapper import AssetMapper
+from models.asset_media import AssetMedia
+from models.asset_history import AssetHistory
+from models.asset import Asset
 
 assets_bp = Blueprint("assets", __name__)
 
@@ -11,32 +13,21 @@ def create_asset():
     name = data.get("name")
     category = data.get("category")
 
-    asset_id = str(uuid.uuid4())
-    db = SessionLocal()
-    asset = AssetORM(id=asset_id, name=name, category=category)
+    domain_asset = Asset(
+        name=name,
+        category=category,
+        media=AssetMedia(),
+        history=AssetHistory(),
+    )
 
-    db.add(asset)
+    asset_orm = AssetMapper.to_orm(domain_asset)
+
+    db = SessionLocal()
+    db.add(asset_orm)
     db.commit()
 
     return {
-        "asset_id": asset.id,
-        "name": asset.name,
-        "category": asset.category,
+        "asset_id": domain_asset.asset_id,
+        "name": domain_asset.name,
+        "category": domain_asset.category
     }, 201
-
-
-@assets_bp.get("/")
-def list_assets():
-    db = SessionLocal()
-    assets = db.query(AssetORM).all()
-
-    return {
-        "assets": [
-            {
-                "asset_id": a.id,
-                "name": a.name,
-                "category": a.category,
-            }
-            for a in assets
-        ]
-    }

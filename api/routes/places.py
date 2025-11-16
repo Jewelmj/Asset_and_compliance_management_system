@@ -1,7 +1,9 @@
 from flask import Blueprint, request
+from mappers.place_mapper import PlaceMapper
+from models.place import Place
+from models.place_metadata import PlaceMetadata
+from models.place_history import PlaceHistory
 from database.db import SessionLocal
-from database.models import PlaceORM
-import uuid
 
 places_bp = Blueprint("places", __name__)
 
@@ -11,35 +13,21 @@ def create_place():
     name = data.get("name")
     location = data.get("location")
 
-    place_id = str(uuid.uuid4())
+    domain_place = Place(
+        name=name,
+        location=location,
+        metadata=PlaceMetadata(),
+        history=PlaceHistory()
+    )
+
+    place_orm = PlaceMapper.to_orm(domain_place)
+
     db = SessionLocal()
-
-    place = PlaceORM(id=place_id, name=name, location=location)
-
-    db.add(place)
+    db.add(place_orm)
     db.commit()
 
     return {
-        "place_id": place.id,
-        "name": place.name,
-        "location": place.location,
+        "place_id": domain_place.place_id,
+        "name": domain_place.name,
+        "location": domain_place.location,
     }, 201
-
-
-@places_bp.get("/")
-def list_places():
-    db = SessionLocal()
-    places = db.query(PlaceORM).all()
-
-    return {
-        "places": [
-            {
-                "place_id": p.id,
-                "name": p.name,
-                "location": p.location,
-                "asset_count": 0,   
-                "people_count": 0,
-            }
-            for p in places
-        ]
-    }
