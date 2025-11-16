@@ -1,1 +1,2 @@
-from user_class.user import User, Admin, Manager, Worker
+if __name__ == "__main__":
+    pass
