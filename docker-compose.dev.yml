@@ -1,0 +1,30 @@
+version: '3.8'
+
+# Development override for docker-compose.yml
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    volumes:
+      - ./api:/app/api
+      - ./database:/app/database
+      - ./models:/app/models
+      - ./services:/app/services
+      - ./mappers:/app/mappers
+      - ./uploads:/app/uploads
+    environment:
+      FLASK_ENV: development
+    command: python -m flask --app api.app run --host=0.0.0.0 --port=5000 --reload
+
+  admin_portal:
+    volumes:
+      - ./admin_portal:/app
+    command: streamlit run app.py --server.runOnSave=true
+
+  field_app:
+    volumes:
+      - ./field_app:/app
+    command: streamlit run app.py --server.runOnSave=true

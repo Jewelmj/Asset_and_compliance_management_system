@@ -2,3 +2,39 @@ presentation/
 idea.txt
 __pycache__/
 project.db
+
+# Environment variables
+.env
+
+# Python
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Uploads
+uploads/
+
+# Logs
+*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3

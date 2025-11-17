@@ -1,2 +1,16 @@
 flask
+flask-smorest
+flask-jwt-extended
 SQLAlchemy
+psycopg2-binary
+bcrypt
+qrcode[pil]
+streamlit
+streamlit-webrtc
+pyzbar
+python-dotenv
+pillow
+pandas
+requests
+opencv-python
+av

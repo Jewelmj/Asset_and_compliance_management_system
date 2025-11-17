@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: sitesteward-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sitesteward}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sitesteward-network
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: sitesteward-api
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-sitesteward}
+      JWT_SECRET: ${JWT_SECRET}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      FLASK_ENV: ${FLASK_ENV:-production}
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - sitesteward-network
+    restart: unless-stopped
+
+  admin_portal:
+    build:
+      context: .
+      dockerfile: admin_portal/Dockerfile
+    container_name: sitesteward-admin
+    ports:
+      - "8501:8501"
+    environment:
+      API_URL: ${API_URL:-http://api:5000}
+    depends_on:
+      - api
+    networks:
+      - sitesteward-network
+    restart: unless-stopped
+
+  field_app:
+    build:
+      context: .
+      dockerfile: field_app/Dockerfile
+    container_name: sitesteward-field
+    ports:
+      - "8502:8501"
+    environment:
+      API_URL: ${API_URL:-http://api:5000}
+    depends_on:
+      - api
+    networks:
+      - sitesteward-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  sitesteward-network:
+    driver: bridge
